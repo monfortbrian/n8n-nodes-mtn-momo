@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mtn-momo",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "n8n node for MTN Mobile Money API - Collections and Disbursements",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,14 +15,34 @@
   },
   "keywords": [
     "n8n",
+    "n8n-community-node-package",
     "n8n-nodes",
     "mtn-momo",
+    "mtn",
     "mobile-money",
     "payments",
     "africa",
-    "fintech"
+    "fintech",
+    "disbursements",
+    "collections",
+    "rwanda",
+    "uganda",
+    "cameroon",
+    "cote-divoire",
+    "ghana",
+    "senegal",
+    "tanzania",
+    "zambia",
+    "nigeria",
+    "automation",
+    "workflow",
+    "integration",
+    "api",
+    "node",
+    "typescript",
+    "ai agents"
   ],
-  "author": "Monfort Brian <monfortnkurunziza0@gmail.com>",
+  "author": "Monfort Brian N. <monfortnkurunziza0@gmail.com>",
   "license": "MIT",
   "n8n": {
     "n8nNodesApiVersion": 1,
@@ -31,6 +51,11 @@
     ],
     "nodes": [
       "dist/nodes/MtnMomo/MtnMomo.node.js"
+    ],
+    "files": [
+      "dist",
+      "README.md",
+      "LICENSE.md"
     ]
   },
   "repository": {

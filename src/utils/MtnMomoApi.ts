@@ -49,36 +49,70 @@ export class MtnMomoApiClient {
       this.baseUrl = 'https://proxy.momoapi.mtn.com';
     }
 
-    // Create axios instance
+    // Create axios instance with timeout and retry
     this.client = axios.create({
       baseURL: this.baseUrl,
+      timeout: 30000, // 30 second timeout
       headers: {
         'Ocp-Apim-Subscription-Key': credentials.subscriptionKey,
         'X-Target-Environment':
           credentials.targetEnvironment || credentials.environment,
       },
     });
+
+    // Add response interceptor for better error messages
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error(
+            'Request timeout - MTN API is taking too long to respond',
+          );
+        }
+        if (error.response?.status === 500) {
+          throw new Error(
+            'MTN API server error (500) - Try again in a few minutes',
+          );
+        }
+        if (error.response?.status === 401) {
+          throw new Error(
+            'Invalid credentials - Check your API User and API Key',
+          );
+        }
+        throw error;
+      },
+    );
   }
 
   /**
-   * Get access token
+   * Get access token with retry logic
    */
   async getAccessToken(): Promise<string> {
     const auth = Buffer.from(
       `${this.credentials.apiUser}:${this.credentials.apiKey}`,
     ).toString('base64');
 
-    const response = await this.client.post(
-      `/${this.credentials.product}/token/`,
-      {},
-      {
-        headers: {
-          Authorization: `Basic ${auth}`,
+    try {
+      const response = await this.client.post(
+        `/${this.credentials.product}/token/`,
+        {},
+        {
+          headers: {
+            Authorization: `Basic ${auth}`,
+          },
+          timeout: 10000, // 10 second timeout for token
         },
-      },
-    );
+      );
 
-    return response.data.access_token;
+      return response.data.access_token;
+    } catch (error: any) {
+      if (error.response?.status === 500) {
+        throw new Error(
+          'MTN API is currently unavailable. Please try again later.',
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -88,15 +122,26 @@ export class MtnMomoApiClient {
     const token = await this.getAccessToken();
     const referenceId = uuidv4();
 
-    await this.client.post(`/disbursement/v1_0/transfer`, request, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-Reference-Id': referenceId,
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      await this.client.post(`/disbursement/v1_0/transfer`, request, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Reference-Id': referenceId,
+          'Content-Type': 'application/json',
+        },
+        timeout: 20000, // 20 second timeout
+      });
 
-    return referenceId;
+      return referenceId;
+    } catch (error: any) {
+      if (error.response?.status === 500) {
+        throw new Error(
+          'MTN API error during transfer. The transaction may still process. Check status with reference ID: ' +
+            referenceId,
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -106,15 +151,26 @@ export class MtnMomoApiClient {
     const token = await this.getAccessToken();
     const referenceId = uuidv4();
 
-    await this.client.post(`/collection/v1_0/requesttopay`, request, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-Reference-Id': referenceId,
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      await this.client.post(`/collection/v1_0/requesttopay`, request, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Reference-Id': referenceId,
+          'Content-Type': 'application/json',
+        },
+        timeout: 20000,
+      });
 
-    return referenceId;
+      return referenceId;
+    } catch (error: any) {
+      if (error.response?.status === 500) {
+        throw new Error(
+          'MTN API error. Check transaction status later with reference ID: ' +
+            referenceId,
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -132,6 +188,7 @@ export class MtnMomoApiClient {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      timeout: 10000,
     });
 
     return response.data;
@@ -144,13 +201,26 @@ export class MtnMomoApiClient {
     const token = await this.getAccessToken();
     const product = this.credentials.product;
 
-    const response = await this.client.get(`/${product}/v1_0/account/balance`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const response = await this.client.get(
+        `/${product}/v1_0/account/balance`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: 10000,
+        },
+      );
 
-    return response.data;
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 500) {
+        throw new Error(
+          'MTN API is currently unavailable. Cannot fetch balance at this time.',
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -166,6 +236,7 @@ export class MtnMomoApiClient {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeout: 10000,
       },
     );
 
