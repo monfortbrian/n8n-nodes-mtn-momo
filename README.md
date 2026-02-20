@@ -1,5 +1,9 @@
 # n8n-nodes-mtn-momo
 
+![n8n-nodes-mtn-momo](https://img.shields.io/npm/v/n8n-nodes-mtn-momo)
+![npm](https://img.shields.io/npm/dt/n8n-nodes-mtn-momo)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 This is an n8n community node for integrating with MTN Mobile Money API.
 
 [n8n](https://n8n.io/) is a workflow automation platform.
